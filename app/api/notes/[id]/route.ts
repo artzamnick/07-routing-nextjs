@@ -6,13 +6,14 @@ import {
   getNoteById,
 } from "@/lib/api";
 
-type Ctx = {
-  params: { id: string } | Promise<{ id: string }>;
-};
+type Params = Promise<{ id: string }>;
 
-export async function GET(_: Request, { params }: Ctx) {
+export async function GET(
+  _: Request,
+  { params }: { params: Params }
+) {
   try {
-    const { id } = await params; 
+    const { id } = await params;
     const note = await getNoteById(id);
     return NextResponse.json(note);
   } catch (err) {
@@ -23,9 +24,12 @@ export async function GET(_: Request, { params }: Ctx) {
   }
 }
 
-export async function DELETE(_: Request, { params }: Ctx) {
+export async function DELETE(
+  _: Request,
+  { params }: { params: Params }
+) {
   try {
-    const { id } = await params; 
+    const { id } = await params;
     const result = await deleteNoteById(id);
     return NextResponse.json(result);
   } catch (err) {

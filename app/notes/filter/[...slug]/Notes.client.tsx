@@ -12,39 +12,41 @@ import NoteForm from "@/components/NoteForm/NoteForm";
 import type { NotesResponse } from "@/types/api";
 
 type Props = {
-  initialPage: number;
-  initialPerPage: number;
-  initialSearch: string;
+  tag?: string;
 };
 
 type NotesQueryParams = {
   page: number;
   perPage: number;
   search: string;
+  tag?: string;
 };
 
-async function fetchNotes({ page, perPage, search }: NotesQueryParams): Promise<NotesResponse> {
-  const url = new URL("/api/notes", window.location.origin);
-  url.searchParams.set("page", String(page));
-  url.searchParams.set("perPage", String(perPage));
+const PER_PAGE = 12;
+
+async function fetchNotes({ page, perPage, search, tag }: NotesQueryParams): Promise<NotesResponse> {
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  params.set("perPage", String(perPage));
 
   const trimmed = search.trim();
-  if (trimmed) url.searchParams.set("search", trimmed);
+  if (trimmed) params.set("search", trimmed);
 
-  const res = await fetch(url.toString());
+  if (tag) params.set("tag", tag);
+
+  const res = await fetch(`/api/notes?${params.toString()}`);
   if (!res.ok) throw new Error("Could not fetch the list of notes.");
 
   return res.json();
 }
 
-export default function NotesClient({ initialPage, initialPerPage, initialSearch }: Props) {
-  const [page, setPage] = useState(initialPage);
+function NotesClientInner({ tag }: Props) {
+  const [page, setPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const [inputValue, setInputValue] = useState(initialSearch);
-  const [search, setSearch] = useState(initialSearch);
+  const [inputValue, setInputValue] = useState("");
+  const [search, setSearch] = useState("");
 
-  // debounce search
   useEffect(() => {
     const t = setTimeout(() => {
       setSearch(inputValue);
@@ -55,13 +57,12 @@ export default function NotesClient({ initialPage, initialPerPage, initialSearch
   }, [inputValue]);
 
   const params = useMemo(
-    () => ({ page, perPage: initialPerPage, search }),
-    [page, initialPerPage, search]
+    () => ({ page, perPage: PER_PAGE, search, tag }),
+    [page, search, tag]
   );
 
   const { data, isLoading, isError, error } = useQuery({
-    // важливо: починаємо з "notes", щоб інвалідейт queryKey:["notes"] працював для всіх варіантів
-    queryKey: ["notes", params.page, params.perPage, params.search],
+    queryKey: ["notes", params.page, params.perPage, params.search, params.tag ?? "all"],
     queryFn: () => fetchNotes(params),
     placeholderData: (prev) => prev,
   });
@@ -80,7 +81,6 @@ export default function NotesClient({ initialPage, initialPerPage, initialSearch
         </button>
       </div>
 
-      {/* ПАГІНАЦІЯ ВГОРІ */}
       {data.totalPages > 1 && (
         <div style={{ marginBottom: 24 }}>
           <Pagination
@@ -106,4 +106,8 @@ export default function NotesClient({ initialPage, initialPerPage, initialSearch
       )}
     </>
   );
+}
+
+export default function NotesClient({ tag }: Props) {
+  return <NotesClientInner key={tag ?? "all"} tag={tag} />;
 }

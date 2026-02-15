@@ -6,14 +6,7 @@ import * as Yup from "yup";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import css from "./NoteForm.module.css";
-
-type NoteTag = "Todo" | "Work" | "Personal" | "Meeting" | "Shopping";
-
-type CreateNotePayload = {
-  title: string;
-  content?: string;
-  tag: NoteTag;
-};
+import type { CreateNotePayload, NoteTag } from "@/types/note";
 
 type NoteFormProps = {
   onCancel: () => void;
@@ -35,12 +28,12 @@ async function createNote(payload: CreateNotePayload) {
   return res.json();
 }
 
+const TAGS: NoteTag[] = ["Todo", "Work", "Personal", "Meeting", "Shopping"];
+
 const validationSchema: Yup.ObjectSchema<CreateNotePayload> = Yup.object({
   title: Yup.string().min(3).max(50).required("Required"),
   content: Yup.string().max(500).optional(),
-  tag: Yup.mixed<NoteTag>()
-    .oneOf(["Todo", "Work", "Personal", "Meeting", "Shopping"])
-    .required("Required"),
+  tag: Yup.mixed<NoteTag>().oneOf(TAGS).required("Required"),
 });
 
 const initialValues: CreateNotePayload = {
@@ -55,7 +48,7 @@ export default function NoteForm({ onCancel, onSuccess }: NoteFormProps) {
   const mutation = useMutation({
     mutationFn: createNote,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["notes"] });
+      await queryClient.invalidateQueries({ queryKey: ["notes"], exact: false });
       onSuccess?.();
     },
   });
@@ -108,11 +101,11 @@ export default function NoteForm({ onCancel, onSuccess }: NoteFormProps) {
           <div className={css.formGroup}>
             <label htmlFor="tag">Tag</label>
             <Field as="select" id="tag" name="tag" className={css.select}>
-              <option value="Todo">Todo</option>
-              <option value="Work">Work</option>
-              <option value="Personal">Personal</option>
-              <option value="Meeting">Meeting</option>
-              <option value="Shopping">Shopping</option>
+              {TAGS.map((tag) => (
+                <option key={tag} value={tag}>
+                  {tag}
+                </option>
+              ))}
             </Field>
             <span className={css.error}>
               <ErrorMessage name="tag" />

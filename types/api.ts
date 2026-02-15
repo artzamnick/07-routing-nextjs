@@ -1,4 +1,4 @@
-import type { Note } from "@/types/note";
+import type { Note, NoteTag } from "@/types/note";
 
 export interface NotesResponse {
   notes: Note[];
@@ -9,4 +9,6 @@ export interface FetchNotesParams {
   page?: number;
   perPage?: number;
   search?: string;
+  tag?: NoteTag;
 }
+

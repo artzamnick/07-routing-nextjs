@@ -6,14 +6,18 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
 
-    const page = Number(url.searchParams.get("page") ?? "1");
-    const perPage = Number(url.searchParams.get("perPage") ?? "12");
+    const pageRaw = Number(url.searchParams.get("page") ?? "1");
+    const perPageRaw = Number(url.searchParams.get("perPage") ?? "12");
     const search = url.searchParams.get("search") ?? "";
 
+    const tagParam = (url.searchParams.get("tag") ?? "").trim();
+    const tag = tagParam && tagParam !== "all" ? tagParam : undefined;
+
     const data = await getNotes({
-      page: Number.isFinite(page) && page > 0 ? page : 1,
-      perPage: Number.isFinite(perPage) && perPage > 0 ? perPage : 12,
+      page: Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : 1,
+      perPage: Number.isFinite(perPageRaw) && perPageRaw > 0 ? perPageRaw : 12,
       search,
+      tag,
     });
 
     return NextResponse.json(data);

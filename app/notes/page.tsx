@@ -29,19 +29,17 @@ export default async function NotesPage({ searchParams }: Props) {
     queryFn: () => getNotes({ page: initialPage, perPage: initialPerPage, search }),
   });
 
-  return (
-    <main className={css.main}>
-      <div className={css.container}>
-        <h1 className={css.title}>Notes</h1>
+return (
+  <div className={css.container}>
+    <h1 className={css.title}>Notes</h1>
 
-        <HydrationBoundary state={dehydrate(queryClient)}>
-          <NotesClient
-            initialPage={initialPage}
-            initialPerPage={initialPerPage}
-            initialSearch={search}
-          />
-        </HydrationBoundary>
-      </div>
-    </main>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <NotesClient
+        initialPage={initialPage}
+        initialPerPage={initialPerPage}
+        initialSearch={search}
+      />
+    </HydrationBoundary>
+  </div>
   );
 }

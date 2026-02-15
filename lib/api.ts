@@ -11,10 +11,10 @@ const api = axios.create({
   },
 });
 
-class ApiError extends Error {
+export class ApiError extends Error {
   status: number;
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status = 500) {
     super(message);
     this.name = "ApiError";
     this.status = status;
@@ -32,7 +32,7 @@ function getToken(): string {
   return token;
 }
 
-function getAuthHeaders() {
+function getAuthHeaders(): { Authorization: string } {
   return {
     Authorization: `Bearer ${getToken()}`,
   };
@@ -42,12 +42,13 @@ function toApiError(err: unknown): ApiError {
   if (axios.isAxiosError(err)) {
     const axErr = err as AxiosError<{ message?: string }>;
     const status = axErr.response?.status ?? 500;
-    const msg =
-      axErr.response?.data?.message ||
-      axErr.message ||
+
+    const message =
+      axErr.response?.data?.message ??
+      axErr.message ??
       `Request failed with status ${status}`;
 
-    return new ApiError(msg, status);
+    return new ApiError(message, status);
   }
 
   if (err instanceof Error) {
@@ -65,9 +66,7 @@ export function getHttpStatus(error: unknown): number {
   return toApiError(error).status;
 }
 
-export async function getNotes(
-  params: FetchNotesParams = {}
-): Promise<NotesResponse> {
+export async function getNotes(params: FetchNotesParams = {}): Promise<NotesResponse> {
   try {
     const page = params.page ?? 1;
     const perPage = params.perPage ?? 12;
@@ -77,6 +76,7 @@ export async function getNotes(
         page,
         perPage,
         ...(params.search ? { search: params.search } : {}),
+        ...(params.tag ? { tag: params.tag } : {}), 
       },
       headers: getAuthHeaders(),
     });

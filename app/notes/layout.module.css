@@ -1,0 +1,15 @@
+.wrapper {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.sidebar {
+  width: 220px;
+  flex: 0 0 220px;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
