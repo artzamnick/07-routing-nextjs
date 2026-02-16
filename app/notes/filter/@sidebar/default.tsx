@@ -1,37 +1,32 @@
-"use client";
-
 import Link from "next/link";
-import { useSelectedLayoutSegment } from "next/navigation";
 import css from "./default.module.css";
 
-import type { FetchTagNote } from "@/types/note";
+type MenuItem = {
+  label: string;
+  href: string;
+};
 
-const TAGS: FetchTagNote[] = [
-  "all",
-  "Todo",
-  "Work",
-  "Personal",
-  "Meeting",
-  "Shopping",
+const MENU: MenuItem[] = [
+  { label: "All notes", href: "/notes/filter/all" },
+  { label: "Todo", href: "/notes/filter/Todo" },
+  { label: "Work", href: "/notes/filter/Work" },
+  { label: "Personal", href: "/notes/filter/Personal" },
+  { label: "Meeting", href: "/notes/filter/Meeting" },
+  { label: "Shopping", href: "/notes/filter/Shopping" },
 ];
 
 export default function Sidebar() {
-  const activeTag = useSelectedLayoutSegment() ?? "all";
-
   return (
-    <ul className={css.menuList}>
-      {TAGS.map((tag) => (
-        <li key={tag} className={css.menuItem}>
-          <Link
-            href={`/notes/filter/${tag}`}
-            className={`${css.menuLink} ${
-              activeTag === tag ? css.active : ""
-            }`}
-          >
-            {tag === "all" ? "All notes" : tag}
-          </Link>
-        </li>
-      ))}
-    </ul>
+    <nav aria-label="Notes filters">
+      <ul className={css.menuList}>
+        {MENU.map((item) => (
+          <li key={item.href} className={css.menuItem}>
+            <Link href={item.href} className={css.menuLink}>
+              {item.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </nav>
   );
 }
