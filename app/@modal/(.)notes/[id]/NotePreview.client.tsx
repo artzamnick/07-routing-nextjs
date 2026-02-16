@@ -7,6 +7,8 @@ import Modal from "@/components/Modal/Modal";
 import { getNoteById } from "@/lib/api";
 import type { Note } from "@/types/note";
 
+import css from "./NotePreview.module.css";
+
 type Props = {
   id: string;
 };
@@ -21,6 +23,8 @@ export default function NotePreviewClient({ id }: Props) {
   const { data: note, isLoading, isError, error } = useQuery<Note>({
     queryKey: ["note", id],
     queryFn: () => getNoteById(id),
+    enabled: Boolean(id),           // ❗ ключ до фіксу "Note id is required"
+    refetchOnMount: false,
     throwOnError: true,
   });
 
@@ -30,24 +34,25 @@ export default function NotePreviewClient({ id }: Props) {
 
   return (
     <Modal onClose={handleClose}>
-      <article style={{ padding: 8, maxWidth: 500 }}>
-        <h2 style={{ marginBottom: 12 }}>{note.title}</h2>
+      <article className={css.wrapper}>
+        <h2 className={css.title}>{note.title}</h2>
 
-        {note.content ? (
-          <p style={{ marginBottom: 12, whiteSpace: "pre-wrap" }}>
-            {note.content}
-          </p>
-        ) : null}
+        {note.content && (
+          <p className={css.content}>{note.content}</p>
+        )}
 
-        <p style={{ marginBottom: 16 }}>
-          <b>Tag:</b> {note.tag}
-        </p>
+        <span className={css.tag}>{note.tag}</span>
 
-        <button type="button" onClick={handleClose}>
-          Close
-        </button>
+        <div className={css.actions}>
+          <button
+            className={css.closeBtn}
+            type="button"
+            onClick={handleClose}
+          >
+            Close
+          </button>
+        </div>
       </article>
     </Modal>
   );
 }
-

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import SearchBox from "@/components/SearchBox/SearchBox";
@@ -26,6 +26,9 @@ function normalizeTag(tag?: FetchTagNote): NoteTag | undefined {
 }
 
 export default function NotesClient({ tag }: Props) {
+  const tagKey = tag ?? "all";
+  const apiTag = normalizeTag(tag);
+
   const [page, setPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -41,33 +44,16 @@ export default function NotesClient({ tag }: Props) {
     return () => clearTimeout(t);
   }, [inputValue]);
 
-  const apiTag = normalizeTag(tag);
-
-  const queryParams = useMemo(
-    () => ({
-      page,
-      perPage: PER_PAGE,
-      search: search.trim(),
-      tag: apiTag,
-      tagKey: tag ?? "all",
-    }),
-    [page, search, apiTag, tag]
-  );
+  const normalizedSearch = search.trim();
 
   const { data, isLoading, isError, error } = useQuery<NotesResponse>({
-    queryKey: [
-      "notes",
-      queryParams.tagKey,
-      queryParams.page,
-      queryParams.perPage,
-      queryParams.search,
-    ],
+    queryKey: ["notes", tagKey, page, 12, normalizedSearch],
     queryFn: () =>
       getNotes({
-        page: queryParams.page,
-        perPage: queryParams.perPage,
-        search: queryParams.search,
-        tag: queryParams.tag,
+        page,
+        perPage: PER_PAGE,
+        search: normalizedSearch,
+        tag: apiTag,
       }),
     placeholderData: (prev: NotesResponse | undefined) => prev,
   });
@@ -77,7 +63,7 @@ export default function NotesClient({ tag }: Props) {
   if (!data) return null;
 
   return (
-    <>
+    <div key={tagKey}>
       <div className={css.toolbar}>
         <div className={css.search}>
           <SearchBox value={inputValue} onChange={setInputValue} />
@@ -109,6 +95,6 @@ export default function NotesClient({ tag }: Props) {
           />
         </Modal>
       )}
-    </>
+    </div>
   );
 }

@@ -4,11 +4,11 @@ import { getNoteById } from "@/lib/api";
 import NotePreviewClient from "./NotePreview.client";
 
 type Props = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 export default async function NotePreviewModalPage({ params }: Props) {
-  const { id } = params;
+  const { id } = await params;
 
   const queryClient = new QueryClient();
 

@@ -10,11 +10,12 @@
 
 .menuLink {
   text-decoration: none;
-  color: black;
+  color: #fff;                 
   font-size: 16px;
   display: block;
   padding: 8px 16px;
-  transition: background-color 0.3s ease;
+  border-radius: 4px;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 .menuLink:hover {
@@ -24,10 +25,5 @@
 
 .active {
   background-color: #444;
-  color: #ddd;
-}
-
-.active {
-  background-color: #444;
-  color: #ddd;
+  color: #fff;
 }

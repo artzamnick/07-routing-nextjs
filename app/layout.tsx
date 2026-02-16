@@ -15,16 +15,27 @@ export default function RootLayout({
   modal,
 }: Readonly<{
   children: React.ReactNode;
-  modal: React.ReactNode;
+  modal?: React.ReactNode;
 }>) {
   return (
     <html lang="en">
       <body>
         <TanStackProvider>
-          <Header />
-          {children}
-          {modal}
-          <Footer />
+          <div
+            style={{
+              minHeight: "100vh",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <Header />
+
+            <main style={{ flex: 1, display: "flex" }}>{children}</main>
+
+            {modal ?? null}
+
+            <Footer />
+          </div>
         </TanStackProvider>
       </body>
     </html>

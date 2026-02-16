@@ -13,17 +13,44 @@ interface Props {
 }
 
 export default function NoteDetails({ id }: Props) {
-  const { data: note, isLoading, isError, error } = useQuery<Note>({
+  const {
+    data: note,
+    isLoading,
+    isError,
+    error,
+  } = useQuery<Note>({
     queryKey: ["note", id],
     queryFn: () => getNoteById(id),
     enabled: Boolean(id),
-    refetchOnMount: false,
-    throwOnError: true,
   });
 
-  if (isLoading) return null;
-  if (isError) throw (error as Error);
-  if (!note) return null;
+  if (isLoading) {
+    return (
+      <div className={css.container}>
+        <p>Loading, please wait...</p>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className={css.container}>
+        <p>
+          {error instanceof Error ? error.message : "Could not load the note."}
+        </p>
+        <Link href="/notes/filter/all">Back to Notes</Link>
+      </div>
+    );
+  }
+
+  if (!note) {
+    return (
+      <div className={css.container}>
+        <p>Note not found.</p>
+        <Link href="/notes/filter/all">Back to Notes</Link>
+      </div>
+    );
+  }
 
   return (
     <div className={css.container}>
@@ -35,11 +62,15 @@ export default function NoteDetails({ id }: Props) {
 
         <span className={css.tag}>{note.tag}</span>
 
-        <p className={css.content}>{note.content}</p>
+        {note.content ? (
+          <p className={css.content}>{note.content}</p>
+        ) : (
+          <p className={css.content} style={{ opacity: 0.7 }}>
+            No content
+          </p>
+        )}
 
-        <p className={css.date}>
-          {note.updatedAt ? note.updatedAt : note.createdAt}
-        </p>
+        <p className={css.date}>{note.updatedAt ?? note.createdAt}</p>
       </div>
     </div>
   );

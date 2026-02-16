@@ -7,13 +7,22 @@ import NotesClient from "./Notes.client";
 import css from "./page.module.css";
 
 type Props = {
-  params: { slug?: string[] };
+  params: Promise<{ slug?: string[] }>;
 };
 
-const ALLOWED = new Set<NoteTag>(["Todo", "Work", "Personal", "Meeting", "Shopping"]);
+const PER_PAGE = 12;
+
+const ALLOWED = new Set<NoteTag>([
+  "Todo",
+  "Work",
+  "Personal",
+  "Meeting",
+  "Shopping",
+]);
 
 export default async function FilteredNotesPage({ params }: Props) {
-  const raw = params.slug?.[0];
+  const { slug } = await params;
+  const raw = slug?.[0];
 
   const tag: FetchTagNote = !raw
     ? "all"
@@ -23,15 +32,19 @@ export default async function FilteredNotesPage({ params }: Props) {
     ? (raw as NoteTag)
     : "all";
 
+  const tagKey = tag;
+  const page = 1;
+  const search = "";
+
   const queryClient = new QueryClient();
 
   await queryClient.prefetchQuery({
-    queryKey: ["notes", tag, 1, 12, ""],
+    queryKey: ["notes", tagKey, page, PER_PAGE, search],
     queryFn: () =>
       getNotes({
-        page: 1,
-        perPage: 12,
-        search: "",
+        page,
+        perPage: PER_PAGE,
+        search,
         tag: tag === "all" ? undefined : (tag as NoteTag),
       }),
   });
