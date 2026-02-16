@@ -1,11 +1,11 @@
 "use client";
 
-import { Formik, Form, Field, ErrorMessage } from "formik";
-import type { FormikHelpers } from "formik";
+import { Formik, Form, Field, ErrorMessage, type FormikHelpers } from "formik";
 import * as Yup from "yup";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import css from "./NoteForm.module.css";
+import { createNote } from "@/lib/api";
 import type { CreateNotePayload, NoteTag } from "@/types/note";
 
 type NoteFormProps = {
@@ -13,26 +13,11 @@ type NoteFormProps = {
   onSuccess?: () => void;
 };
 
-async function createNote(payload: CreateNotePayload) {
-  const res = await fetch("/api/notes", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    const data = (await res.json().catch(() => null)) as { message?: string } | null;
-    throw new Error(data?.message || "Could not create note.");
-  }
-
-  return res.json();
-}
-
 const TAGS: NoteTag[] = ["Todo", "Work", "Personal", "Meeting", "Shopping"];
 
-const validationSchema: Yup.ObjectSchema<CreateNotePayload> = Yup.object({
-  title: Yup.string().min(3).max(50).required("Required"),
-  content: Yup.string().max(500).optional(),
+const validationSchema = Yup.object({
+  title: Yup.string().min(3, "Required").max(50, "Required").required("Required"),
+  content: Yup.string().max(500, "Required"),
   tag: Yup.mixed<NoteTag>().oneOf(TAGS).required("Required"),
 });
 
@@ -46,9 +31,9 @@ export default function NoteForm({ onCancel, onSuccess }: NoteFormProps) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: createNote,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["notes"], exact: false });
+    mutationFn: (payload: CreateNotePayload) => createNote(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
       onSuccess?.();
     },
   });
@@ -59,7 +44,7 @@ export default function NoteForm({ onCancel, onSuccess }: NoteFormProps) {
   ) => {
     const payload: CreateNotePayload = {
       title: values.title.trim(),
-      content: values.content?.trim() ? values.content.trim() : undefined,
+      content: values.content.trim(), 
       tag: values.tag,
     };
 
@@ -113,11 +98,7 @@ export default function NoteForm({ onCancel, onSuccess }: NoteFormProps) {
           </div>
 
           <div className={css.actions}>
-            <button
-              type="button"
-              className={css.cancelButton}
-              onClick={onCancel}
-            >
+            <button type="button" className={css.cancelButton} onClick={onCancel}>
               Cancel
             </button>
 

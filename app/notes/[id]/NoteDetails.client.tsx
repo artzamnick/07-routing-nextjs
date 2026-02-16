@@ -2,49 +2,44 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+
+import { getNoteById } from "@/lib/api";
 import type { Note } from "@/types/note";
+
 import css from "./NoteDetails.module.css";
 
 interface Props {
   id: string;
 }
 
-async function fetchNote(id: string): Promise<Note> {
-  const res = await fetch(`/api/notes/${id}`);
-
-  if (!res.ok) {
-    throw new Error("Could not fetch note details.");
-  }
-
-  return res.json();
-}
-
 export default function NoteDetails({ id }: Props) {
-  const { data, isLoading, isError, error } = useQuery({
+  const { data: note, isLoading, isError, error } = useQuery<Note>({
     queryKey: ["note", id],
-    queryFn: () => fetchNote(id),
+    queryFn: () => getNoteById(id),
     enabled: Boolean(id),
-
     refetchOnMount: false,
+    throwOnError: true,
   });
 
   if (isLoading) return null;
-  if (isError) throw error;
-  if (!data) return null;
+  if (isError) throw (error as Error);
+  if (!note) return null;
 
   return (
     <div className={css.container}>
       <div className={css.item}>
         <div className={css.header}>
-          <h2>{data.title}</h2>
-          <Link href="/notes">Back to Notes</Link>
+          <h2>{note.title}</h2>
+          <Link href="/notes/filter/all">Back to Notes</Link>
         </div>
 
-        <span className={css.tag}>{data.tag}</span>
+        <span className={css.tag}>{note.tag}</span>
 
-        <p className={css.content}>{data.content}</p>
+        <p className={css.content}>{note.content}</p>
 
-        <p className={css.date}>{new Date(data.createdAt).toLocaleString()}</p>
+        <p className={css.date}>
+          {note.updatedAt ? note.updatedAt : note.createdAt}
+        </p>
       </div>
     </div>
   );

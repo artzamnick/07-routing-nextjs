@@ -1,13 +1,16 @@
+import type { ReactNode } from "react";
+import css from "./layout.module.css";
+
 type Props = {
-  children: React.ReactNode;
-  sidebar: React.ReactNode;
+  children: ReactNode;
+  sidebar: ReactNode;
 };
 
-export default function NotesLayout({ children, sidebar }: Props) {
+export default function Layout({ children, sidebar }: Props) {
   return (
-    <div style={{ display: "flex", gap: 24 }}>
-      <aside style={{ width: 220 }}>{sidebar}</aside>
-      <main style={{ flex: 1 }}>{children}</main>
+    <div className={css.container}>
+      <aside className={css.sidebar}>{sidebar}</aside>
+      <div className={css.notesWrapper}>{children}</div>
     </div>
   );
 }

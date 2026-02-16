@@ -9,7 +9,7 @@ export default function SearchBox({ value, onChange }: SearchBoxProps) {
   return (
     <input
       className={css.input}
-      type="text"
+      type="search"
       name="search"
       value={value}
       placeholder="Search notes"

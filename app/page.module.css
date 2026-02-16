@@ -13,7 +13,6 @@
   min-height: 100vh;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-geist-sans);
   background-color: var(--background);
 }
 
@@ -89,7 +88,6 @@ a.secondary {
   border-color: var(--button-secondary-border);
 }
 
-/* Enable hover only on non-touch devices */
 @media (hover: hover) and (pointer: fine) {
   a.primary:hover {
     background: var(--button-primary-hover);
@@ -134,4 +132,14 @@ a.secondary {
     --button-secondary-hover: #1a1a1a;
     --button-secondary-border: #1a1a1a;
   }
+}
+
+.notfound {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
 }

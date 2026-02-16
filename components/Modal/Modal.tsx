@@ -1,24 +1,16 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import css from "./Modal.module.css";
 
 type ModalProps = {
-  isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
 };
 
-export default function Modal({ isOpen, onClose, children }: ModalProps) {
-  const modalRoot = useMemo(() => {
-    if (typeof document === "undefined") return null;
-    return document.getElementById("modal-root");
-  }, []);
-
+export default function Modal({ onClose, children }: ModalProps) {
   useEffect(() => {
-    if (!isOpen) return;
-
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
@@ -26,16 +18,13 @@ export default function Modal({ isOpen, onClose, children }: ModalProps) {
       if (event.key === "Escape") onClose();
     };
 
-    window.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = previousOverflow;
     };
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
-  if (!modalRoot) return null;
+  }, [onClose]);
 
   const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if (event.target === event.currentTarget) onClose();
@@ -50,6 +39,6 @@ export default function Modal({ isOpen, onClose, children }: ModalProps) {
     >
       <div className={css.modal}>{children}</div>
     </div>,
-    modalRoot
+    document.body
   );
 }

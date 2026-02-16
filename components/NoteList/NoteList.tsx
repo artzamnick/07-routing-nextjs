@@ -2,37 +2,33 @@
 
 import Link from "next/link";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+
 import type { Note } from "@/types/note";
+import { deleteNoteById } from "@/lib/api";
+
 import css from "./NoteList.module.css";
 
 interface NoteListProps {
   notes: Note[];
 }
 
-async function deleteNote(noteId: string): Promise<void> {
-  const res = await fetch(`/api/notes/${noteId}`, { method: "DELETE" });
-
-  if (!res.ok) {
-    const data = (await res.json().catch(() => null)) as { message?: string } | null;
-    throw new Error(data?.message || "Could not delete the note.");
-  }
-}
-
 export default function NoteList({ notes }: NoteListProps) {
   const queryClient = useQueryClient();
 
-  const { mutate: onDelete, isPending, isError, error } = useMutation({
-    mutationFn: deleteNote,
-    onSuccess: async () => {
-await queryClient.invalidateQueries({ queryKey: ["notes"], exact: false });
+  const deleteMutation = useMutation({
+    mutationFn: (noteId: string) => deleteNoteById(noteId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
   });
 
   return (
     <>
-      {isError && (
-        <p className={css.content}>
-          {error instanceof Error ? error.message : "Could not delete the note."}
+      {deleteMutation.isError && (
+        <p>
+          {deleteMutation.error instanceof Error
+            ? deleteMutation.error.message
+            : "Could not delete the note."}
         </p>
       )}
 
@@ -46,20 +42,21 @@ await queryClient.invalidateQueries({ queryKey: ["notes"], exact: false });
             <div className={css.footer}>
               <span className={css.tag}>{note.tag}</span>
 
-              <div>
-                <Link href={`/notes/${note.id}`} className={css.link}>
-                  View details
-                </Link>
+              <Link href={`/notes/${note.id}`} className={css.link}>
+                View details
+              </Link>
 
-                <button
-                  type="button"
-                  className={css.button}
-                  onClick={() => onDelete(note.id)}
-                  disabled={isPending}
-                >
-                  Delete
-                </button>
-              </div>
+              <button
+                type="button"
+                className={css.button}
+                onClick={() => deleteMutation.mutate(note.id)}
+                disabled={
+                  deleteMutation.isPending &&
+                  deleteMutation.variables === note.id
+                }
+              >
+                Delete
+              </button>
             </div>
           </li>
         ))}

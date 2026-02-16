@@ -1,7 +1,7 @@
 import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";
-import NoteDetails from "./NoteDetails.client";
-import css from "./page.module.css";
+
 import { getNoteById } from "@/lib/api";
+import NoteDetails from "./NoteDetails.client";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -18,12 +18,8 @@ export default async function NoteDetailsPage({ params }: Props) {
   });
 
   return (
-    <main className={css.main}>
-      <div className={css.container}>
-        <HydrationBoundary state={dehydrate(queryClient)}>
-          <NoteDetails id={id} />
-        </HydrationBoundary>
-      </div>
-    </main>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <NoteDetails id={id} />
+    </HydrationBoundary>
   );
 }

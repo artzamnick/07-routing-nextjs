@@ -9,38 +9,23 @@ import Pagination from "@/components/Pagination/Pagination";
 import Modal from "@/components/Modal/Modal";
 import NoteForm from "@/components/NoteForm/NoteForm";
 
-import type { NotesResponse } from "@/types/api";
+import { getNotes } from "@/lib/api";
+import type { FetchTagNote, NoteTag, NotesResponse } from "@/types/note";
+
+import css from "./page.module.css";
 
 type Props = {
-  tag?: string;
-};
-
-type NotesQueryParams = {
-  page: number;
-  perPage: number;
-  search: string;
-  tag?: string;
+  tag?: FetchTagNote;
 };
 
 const PER_PAGE = 12;
 
-async function fetchNotes({ page, perPage, search, tag }: NotesQueryParams): Promise<NotesResponse> {
-  const params = new URLSearchParams();
-  params.set("page", String(page));
-  params.set("perPage", String(perPage));
-
-  const trimmed = search.trim();
-  if (trimmed) params.set("search", trimmed);
-
-  if (tag) params.set("tag", tag);
-
-  const res = await fetch(`/api/notes?${params.toString()}`);
-  if (!res.ok) throw new Error("Could not fetch the list of notes.");
-
-  return res.json();
+function normalizeTag(tag?: FetchTagNote): NoteTag | undefined {
+  if (!tag || tag === "all") return undefined;
+  return tag;
 }
 
-function NotesClientInner({ tag }: Props) {
+export default function NotesClient({ tag }: Props) {
   const [page, setPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -56,15 +41,35 @@ function NotesClientInner({ tag }: Props) {
     return () => clearTimeout(t);
   }, [inputValue]);
 
-  const params = useMemo(
-    () => ({ page, perPage: PER_PAGE, search, tag }),
-    [page, search, tag]
+  const apiTag = normalizeTag(tag);
+
+  const queryParams = useMemo(
+    () => ({
+      page,
+      perPage: PER_PAGE,
+      search: search.trim(),
+      tag: apiTag,
+      tagKey: tag ?? "all",
+    }),
+    [page, search, apiTag, tag]
   );
 
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["notes", params.page, params.perPage, params.search, params.tag ?? "all"],
-    queryFn: () => fetchNotes(params),
-    placeholderData: (prev) => prev,
+  const { data, isLoading, isError, error } = useQuery<NotesResponse>({
+    queryKey: [
+      "notes",
+      queryParams.tagKey,
+      queryParams.page,
+      queryParams.perPage,
+      queryParams.search,
+    ],
+    queryFn: () =>
+      getNotes({
+        page: queryParams.page,
+        perPage: queryParams.perPage,
+        search: queryParams.search,
+        tag: queryParams.tag,
+      }),
+    placeholderData: (prev: NotesResponse | undefined) => prev,
   });
 
   if (isLoading) return null;
@@ -73,28 +78,28 @@ function NotesClientInner({ tag }: Props) {
 
   return (
     <>
-      <div style={{ display: "flex", gap: 12, marginBottom: 24, alignItems: "center" }}>
-        <SearchBox value={inputValue} onChange={setInputValue} />
-
-        <button type="button" onClick={() => setIsModalOpen(true)}>
-          Add note
-        </button>
-      </div>
-
-      {data.totalPages > 1 && (
-        <div style={{ marginBottom: 24 }}>
-          <Pagination
-            page={page}
-            pageCount={data.totalPages}
-            onChange={(newPage) => setPage(newPage)}
-          />
+      <div className={css.toolbar}>
+        <div className={css.search}>
+          <SearchBox value={inputValue} onChange={setInputValue} />
         </div>
-      )}
+
+        <div className={css.pagination}>
+          {data.totalPages > 1 && (
+            <Pagination page={page} totalPages={data.totalPages} setPage={setPage} />
+          )}
+        </div>
+
+        <div className={css.create}>
+          <button type="button" onClick={() => setIsModalOpen(true)}>
+            Add note
+          </button>
+        </div>
+      </div>
 
       <NoteList notes={data.notes} />
 
       {isModalOpen && (
-        <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <Modal onClose={() => setIsModalOpen(false)}>
           <NoteForm
             onCancel={() => setIsModalOpen(false)}
             onSuccess={() => {
@@ -106,8 +111,4 @@ function NotesClientInner({ tag }: Props) {
       )}
     </>
   );
-}
-
-export default function NotesClient({ tag }: Props) {
-  return <NotesClientInner key={tag ?? "all"} tag={tag} />;
 }

@@ -1,6 +1,5 @@
 import axios, { AxiosError } from "axios";
-import type { CreateNotePayload, Note } from "@/types/note";
-import type { FetchNotesParams, NotesResponse } from "@/types/api";
+import type { CreateNotePayload, FetchNotesParams, Note, NotesResponse } from "@/types/note";
 
 const API_BASE = "https://notehub-public.goit.study/api";
 
@@ -11,22 +10,11 @@ const api = axios.create({
   },
 });
 
-export class ApiError extends Error {
-  status: number;
-
-  constructor(message: string, status = 500) {
-    super(message);
-    this.name = "ApiError";
-    this.status = status;
-  }
-}
-
 function getToken(): string {
-  const token =
-    process.env.NEXT_PUBLIC_NOTEHUB_TOKEN ?? process.env.NOTEHUB_TOKEN;
+  const token = process.env.NEXT_PUBLIC_NOTEHUB_TOKEN;
 
   if (!token) {
-    throw new Error("Missing NOTEHUB_TOKEN or NEXT_PUBLIC_NOTEHUB_TOKEN in env");
+    throw new Error("Missing NEXT_PUBLIC_NOTEHUB_TOKEN in env");
   }
 
   return token;
@@ -38,52 +26,40 @@ function getAuthHeaders(): { Authorization: string } {
   };
 }
 
-function toApiError(err: unknown): ApiError {
+function toMessage(err: unknown): string {
   if (axios.isAxiosError(err)) {
     const axErr = err as AxiosError<{ message?: string }>;
-    const status = axErr.response?.status ?? 500;
-
-    const message =
-      axErr.response?.data?.message ??
-      axErr.message ??
-      `Request failed with status ${status}`;
-
-    return new ApiError(message, status);
+    return axErr.response?.data?.message ?? axErr.message ?? "Request failed";
   }
 
-  if (err instanceof Error) {
-    return new ApiError(err.message, 500);
-  }
-
-  return new ApiError("Unknown error", 500);
+  if (err instanceof Error) return err.message;
+  return "Unknown error";
 }
 
 export function getHttpMessage(error: unknown): string {
-  return toApiError(error).message;
+  return toMessage(error);
 }
 
-export function getHttpStatus(error: unknown): number {
-  return toApiError(error).status;
-}
+export async function getNotes(
+  params: FetchNotesParams = {}
+): Promise<NotesResponse> {
+  const page = params.page ?? 1;
+  const perPage = params.perPage ?? 12;
 
-export async function getNotes(params: FetchNotesParams = {}): Promise<NotesResponse> {
   try {
-    const page = params.page ?? 1;
-    const perPage = params.perPage ?? 12;
-
     const response = await api.get<NotesResponse>("/notes", {
       params: {
         page,
         perPage,
         ...(params.search ? { search: params.search } : {}),
-        ...(params.tag ? { tag: params.tag } : {}), 
+        ...(params.tag ? { tag: params.tag } : {}),
       },
       headers: getAuthHeaders(),
     });
 
     return response.data;
   } catch (err) {
-    throw toApiError(err);
+    throw new Error(toMessage(err));
   }
 }
 
@@ -97,7 +73,7 @@ export async function getNoteById(id: string): Promise<Note> {
 
     return response.data;
   } catch (err) {
-    throw toApiError(err);
+    throw new Error(toMessage(err));
   }
 }
 
@@ -109,7 +85,7 @@ export async function createNote(payload: CreateNotePayload): Promise<Note> {
 
     return response.data;
   } catch (err) {
-    throw toApiError(err);
+    throw new Error(toMessage(err));
   }
 }
 
@@ -123,6 +99,6 @@ export async function deleteNoteById(id: string): Promise<Note> {
 
     return response.data;
   } catch (err) {
-    throw toApiError(err);
+    throw new Error(toMessage(err));
   }
 }
